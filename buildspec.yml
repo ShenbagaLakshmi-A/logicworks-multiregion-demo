@@ -18,3 +18,10 @@ phases:
     commands:
       - echo Build completed on `date`
       - docker push 396462617987.dkr.ecr.ap-south-1.amazonaws.com/logicworks-multiregion-demo:1.0
+      - echo Writing image definition file
+      - printf '[{"name":"logicworks-demo","imageUri":"%s"}]' 396462617987.dkr.ecr.ap-south-1.amazonaws.com/logicworks-multiregion-demo:1.0 > imagedefinitions.json
+
+artifacts:
+  files:
+    - imagedefinitions.json
+    - deploy.sh
