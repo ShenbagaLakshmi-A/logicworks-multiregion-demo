@@ -1,27 +1,23 @@
 #!/bin/bash
-
 set -e
 
-REGION="ap-south-1"
-ACCOUNT_ID="396462617987"
-REPO_NAME="logicworks-multiregion-demo"
-IMAGE_TAG="1.0"
-CONTAINER_NAME="logicworks-demo"
+echo "Preparing SSH key"
+mkdir -p ~/.ssh
+echo "$EC2_SSH_KEY" > ~/.ssh/ec2-key.pem
+chmod 400 ~/.ssh/ec2-key.pem
 
-echo "Logging into Amazon ECR"
+echo "Deploying to EC2"
+ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2-key.pem \
+$EC2_USER@$EC2_HOST << EOF
+
+docker stop logicworks-demo || true
+docker rm logicworks-demo || true
+
 aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
 
-echo "Stopping existing container if running"
-docker stop $CONTAINER_NAME || true
-docker rm $CONTAINER_NAME || true
+docker pull $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPO_NAME:1.0
 
-echo "Pulling latest image from ECR"
-docker pull $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPO_NAME:$IMAGE_TAG
+docker run -d -p 80:8080 --name logicworks-demo \
+$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPO_NAME:1.0
 
-echo "Starting new container"
-docker run -d \
-  -p 80:8080 \
-  --name $CONTAINER_NAME \
-  $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPO_NAME:$IMAGE_TAG
-
-echo "Deployment completed successfully"
+EOF
