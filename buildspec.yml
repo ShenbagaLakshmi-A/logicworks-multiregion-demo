@@ -6,28 +6,31 @@ phases:
       docker: 24
     commands:
       - echo Installing dependencies...
+
   pre_build:
     commands:
       - echo Logging in to Amazon ECR...
       - aws --version
-      - REPOSITORY_URI=396462617987.dkr.ecr.ap-south-1.amazonaws.com/logicworks-multiregion-demo
-      - IMAGE_TAG=${CODEBUILD_RESOLVED_SOURCE_VERSION:0:7}  # Use first 7 chars of commit ID as tag
+      - REPOSITORY_URI="396462617987.dkr.ecr.ap-south-1.amazonaws.com/logicworks-multiregion-demo"
+      - IMAGE_TAG="${CODEBUILD_RESOLVED_SOURCE_VERSION:0:7}"  # First 7 chars of commit ID
       - echo "Repository: $REPOSITORY_URI, Tag: $IMAGE_TAG"
       - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin $REPOSITORY_URI
+
   build:
     commands:
-      - echo "Starting EC2 deployment"
+      - echo "Starting deployment script"
       - cd src
       - chmod +x deploy.sh
       - ./deploy.sh
-      - echo "Tagging Docker image"
+      - echo "Tagging Docker image for ECR"
       - docker tag logicworks-multiregion-demo:1.0 $REPOSITORY_URI:$IMAGE_TAG
+
   post_build:
     commands:
-      - echo Build completed on `date`
-      - echo Pushing Docker image to ECR
+      - echo "Build completed on `date`"
+      - echo "Pushing Docker image to ECR"
       - docker push $REPOSITORY_URI:$IMAGE_TAG
-      - echo Writing image definition file
+      - echo "Writing imagedefinitions.json for ECS"
       - printf '[{"name":"logicworks-demo","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
 
 artifacts:
