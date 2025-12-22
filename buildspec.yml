@@ -11,10 +11,10 @@ phases:
     commands:
       - echo "Logging in to Amazon ECR..."
       - aws --version
-      - REPOSITORY_URI="396462617987.dkr.ecr.ap-south-1.amazonaws.com/logicworks-multiregion-demo"
-      - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c1-7)
-      - echo "Repository: ${REPOSITORY_URI}"
-      - echo "Tag: ${IMAGE_TAG}"
+      - export REPOSITORY_URI="396462617987.dkr.ecr.ap-south-1.amazonaws.com/logicworks-multiregion-demo"
+      - export IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c1-7)
+      - echo "Repository: $REPOSITORY_URI"
+      - echo "Tag: $IMAGE_TAG"
       - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin $REPOSITORY_URI
 
   build:
