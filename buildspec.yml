@@ -9,10 +9,10 @@ phases:
 
   build:
     commands:
-      - echo Build started on `date`
-      - mvn clean package -DskipTests
-      - docker build -t logicworks-multiregion-demo:1.0 .
-      - docker tag logicworks-multiregion-demo:1.0 396462617987.dkr.ecr.ap-south-1.amazonaws.com/logicworks-multiregion-demo:1.0
+      - echo "Starting EC2 deployment"
+      - cd src
+      - chmod +x deploy.sh
+      - ./deploy.sh
 
   post_build:
     commands:
