@@ -25,8 +25,11 @@ phases:
       - docker tag logicworks-multiregion-demo:latest $REPOSITORY_URI:$IMAGE_TAG
       - docker tag logicworks-multiregion-demo:latest $REPOSITORY_URI:latest
       - echo $IMAGE_TAG > imageTag.txt
+      - echo "Pushing Docker images to ECR..."
       - docker push $REPOSITORY_URI:$IMAGE_TAG
       - docker push $REPOSITORY_URI:latest
+      - echo "Generating imagedefinitions.json for ECS deployment..."
+      - printf '[{"name":"logicworks-multiregion-demo","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
 
 artifacts:
   files:
