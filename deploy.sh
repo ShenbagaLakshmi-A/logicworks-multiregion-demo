@@ -1,23 +1,13 @@
 #!/bin/bash
 set -e
 
-echo "Preparing SSH key"
-mkdir -p ~/.ssh
-echo "$EC2_SSH_KEY" > ~/.ssh/ec2-key.pem
-chmod 400 ~/.ssh/ec2-key.pem
+aws ecr get-login-password --region ap-south-1 \
+ | docker login --username AWS --password-stdin 396462617987.dkr.ecr.ap-south-1.amazonaws.com
 
-echo "Deploying to EC2"
-ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2-key.pem \
-$EC2_USER@$EC2_HOST << EOF
+docker pull 396462617987.dkr.ecr.ap-south-1.amazonaws.com/logicworks-multiregion-demo:1.0
 
 docker stop logicworks-demo || true
 docker rm logicworks-demo || true
 
-aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
-
-docker pull $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPO_NAME:1.0
-
 docker run -d -p 80:8080 --name logicworks-demo \
-$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPO_NAME:1.0
-
-EOF
+396462617987.dkr.ecr.ap-south-1.amazonaws.com/logicworks-multiregion-demo:1.0
