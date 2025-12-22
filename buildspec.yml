@@ -3,7 +3,7 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      docker: 2
+      docker: 24
     commands:
       - echo "Using CodeBuild standard image with Docker preinstalled"
 
