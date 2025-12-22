@@ -1,0 +1,15 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo "Logging in to Amazon ECR"
+      - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 396462617987.dkr.ecr.ap-south-1.amazonaws.com
+
+  build:
+    commands:
+      - echo "Deploying container on EC2"
+      - docker pull 396462617987.dkr.ecr.ap-south-1.amazonaws.com/logicworks-multiregion-demo:latest
+      - docker stop logicworks-demo || true
+      - docker rm logicworks-demo || true
+      - docker run -d -p 80:80 --name logicworks-demo 396462617987.dkr.ecr.ap-south-1.amazonaws.com/logicworks-multiregion-demo:latest
