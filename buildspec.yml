@@ -3,29 +3,31 @@ version: 0.2
 phases:
   install:
     commands:
-      - echo "Deploy stage started"
+      - echo "Build stage started"
 
   pre_build:
     commands:
-      - echo "Pre-build started"
+      - echo "Logging in to Amazon ECR..."
       - REPOSITORY_URI="396462617987.dkr.ecr.ap-south-1.amazonaws.com/logicworks-multiregion-demo"
       - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c1-7)
-      - echo "Deploying IMAGE_TAG=$IMAGE_TAG"
+      - echo "Repository: $REPOSITORY_URI"
+      - echo "IMAGE_TAG: $IMAGE_TAG"
       - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin $REPOSITORY_URI
 
   build:
     commands:
-      - echo "Pulling Docker image..."
-      - docker pull $REPOSITORY_URI:$IMAGE_TAG
-      - echo "Stopping old container if exists..."
-      - docker stop logicworks-demo || true
-      - docker rm logicworks-demo || true
-      - echo "Running new container..."
-      - docker run -d --name logicworks-demo -p 80:8080 $REPOSITORY_URI:$IMAGE_TAG
+      - echo "Building Docker image..."
+      - docker build -t logicworks-multiregion-demo:latest .
+      - echo "Tagging Docker image..."
+      - docker tag logicworks-multiregion-demo:latest $REPOSITORY_URI:$IMAGE_TAG
+      - docker tag logicworks-multiregion-demo:latest $REPOSITORY_URI:latest
+      - echo "Pushing Docker images..."
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - docker push $REPOSITORY_URI:latest
 
   post_build:
     commands:
-      - echo "Deployment completed successfully"
+      - echo "Build completed successfully"
 
 artifacts:
   files:

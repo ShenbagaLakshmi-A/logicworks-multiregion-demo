@@ -17,8 +17,10 @@ phases:
     commands:
       - echo "Pulling Docker image..."
       - docker pull $REPOSITORY_URI:$IMAGE_TAG
+      - echo "Stopping old container if exists..."
       - docker stop logicworks-demo || true
       - docker rm logicworks-demo || true
+      - echo "Running new container..."
       - docker run -d --name logicworks-demo -p 80:8080 $REPOSITORY_URI:$IMAGE_TAG
 
   post_build:
