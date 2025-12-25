@@ -3,35 +3,30 @@ version: 0.2
 phases:
   install:
     commands:
-      - echo "Using CodeBuild standard image with Docker preinstalled"
+      - echo "Deploy stage started"
 
   pre_build:
     commands:
-      - |
-        echo "Logging in to Amazon ECR..."
-        aws --version
-        REPOSITORY_URI="396462617987.dkr.ecr.ap-south-1.amazonaws.com/logicworks-multiregion-demo"
-        IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c1-7)
-        echo "Repository: $REPOSITORY_URI"
-        echo "Tag: $IMAGE_TAG"
-        aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin $REPOSITORY_URI
+      - echo "Pre-build started"
+      - REPOSITORY_URI="396462617987.dkr.ecr.ap-south-1.amazonaws.com/logicworks-multiregion-demo"
+      - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c1-7)
+      - echo "Deploying IMAGE_TAG=$IMAGE_TAG"
+      - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin $REPOSITORY_URI
 
   build:
     commands:
-      - |
-        echo "Building Docker image..."
-        docker build -t logicworks-multiregion-demo:latest .
-        echo "Tagging Docker image for ECR..."
-        docker tag logicworks-multiregion-demo:latest $REPOSITORY_URI:$IMAGE_TAG
-        docker tag logicworks-multiregion-demo:latest $REPOSITORY_URI:latest
-        echo $IMAGE_TAG > imageTag.txt
-        echo "Pushing Docker images to ECR..."
-        docker push $REPOSITORY_URI:$IMAGE_TAG
-        docker push $REPOSITORY_URI:latest
-        echo "Generating imagedefinitions.json for ECS deployment..."
-        printf '[{"name":"logicworks-multiregion-demo","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+      - echo "Pulling Docker image..."
+      - docker pull $REPOSITORY_URI:$IMAGE_TAG
+      - echo "Stopping old container if exists..."
+      - docker stop logicworks-demo || true
+      - docker rm logicworks-demo || true
+      - echo "Running new container..."
+      - docker run -d --name logicworks-demo -p 80:8080 $REPOSITORY_URI:$IMAGE_TAG
+
+  post_build:
+    commands:
+      - echo "Deployment completed successfully"
 
 artifacts:
   files:
-    - imagedefinitions.json
-    - imageTag.txt
+    - '**/*'
