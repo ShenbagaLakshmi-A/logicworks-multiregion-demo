@@ -8,8 +8,7 @@ phases:
   pre_build:
     commands:
       - echo "Deploy phase started on $(date)"
-      - export IMAGE_TAG=$(cat imageTag.txt)
-      - echo "Deploying image tag: $IMAGE_TAG"
+      - bash -c 'IMAGE_TAG=$(cat imageTag.txt); echo "Deploying image tag: $IMAGE_TAG"; export IMAGE_TAG'
       - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 396462617987.dkr.ecr.ap-south-1.amazonaws.com
 
   build:
@@ -20,8 +19,12 @@ phases:
       - docker stop logicworks-demo || true
       - docker rm logicworks-demo || true
       - echo "Running new container..."
-      - docker run -d --name logicworks-demo -p 80:8080 396462617987.dkr.ecr.ap-south-1.amazonaws.com/logicworks-multiregion-demo:$IMAGE_TAG
+      - docker run -d --name logicworks-demo -p 80:80 396462617987.dkr.ecr.ap-south-1.amazonaws.com/logicworks-multiregion-demo:$IMAGE_TAG
 
   post_build:
     commands:
       - echo "Deployment completed successfully on $(date)"
+
+artifacts:
+  files:
+    - '**/*'
