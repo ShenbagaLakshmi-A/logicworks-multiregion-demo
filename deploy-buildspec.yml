@@ -8,7 +8,7 @@ phases:
   pre_build:
     commands:
       - echo "Deploy phase started on $(date)"
-      - IMAGE_TAG=$(cat imageTag.txt)
+      - export IMAGE_TAG=$(cat imageTag.txt)
       - echo "Deploying image tag: $IMAGE_TAG"
       - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 396462617987.dkr.ecr.ap-south-1.amazonaws.com
 
