@@ -3,32 +3,34 @@ version: 0.2
 phases:
   install:
     commands:
-      - echo "Build stage started"
+      - echo "Using CodeBuild standard image with Docker preinstalled"
 
   pre_build:
     commands:
-      - echo "Logging in to Amazon ECR..."
-      - REPOSITORY_URI="396462617987.dkr.ecr.ap-south-1.amazonaws.com/logicworks-multiregion-demo"
-      - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c1-7)
-      - echo "Repository: $REPOSITORY_URI"
-      - echo "IMAGE_TAG: $IMAGE_TAG"
-      - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin $REPOSITORY_URI
+      - |
+        echo "Logging in to Amazon ECR..."
+        aws --version
+        REPOSITORY_URI="396462617987.dkr.ecr.ap-south-1.amazonaws.com/logicworks-multiregion-demo"
+        IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c1-7)
+        echo "Repository: $REPOSITORY_URI"
+        echo "Tag: $IMAGE_TAG"
+        aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin $REPOSITORY_URI
 
   build:
     commands:
-      - echo "Building Docker image..."
-      - docker build -t logicworks-multiregion-demo:latest .
-      - echo "Tagging Docker image..."
-      - docker tag logicworks-multiregion-demo:latest $REPOSITORY_URI:$IMAGE_TAG
-      - docker tag logicworks-multiregion-demo:latest $REPOSITORY_URI:latest
-      - echo "Pushing Docker images..."
-      - docker push $REPOSITORY_URI:$IMAGE_TAG
-      - docker push $REPOSITORY_URI:latest
-
-  post_build:
-    commands:
-      - echo "Build completed successfully"
+      - |
+        echo "Building Docker image..."
+        docker build -t logicworks-multiregion-demo:latest .
+        echo "Tagging Docker image for ECR..."
+        docker tag logicworks-multiregion-demo:latest $REPOSITORY_URI:$IMAGE_TAG
+        docker tag logicworks-multiregion-demo:latest $REPOSITORY_URI:latest
+        echo "Pushing Docker images to ECR..."
+        docker push $REPOSITORY_URI:$IMAGE_TAG
+        docker push $REPOSITORY_URI:latest
+        echo "Generating imagedefinitions.json for ECS deployment..."
+        printf '[{"name":"logicworks-multiregion-demo","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
 
 artifacts:
   files:
-    - '**/*'
+    - imagedefinitions.json
+    - imageTag.txt
